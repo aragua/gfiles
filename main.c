@@ -20,7 +20,7 @@ typedef struct _Data {
 	GtkWidget *store;
 } Data;
 
-#define DEFAULTPATH "/home/aragua"
+#define DEFAULTPATH "/"
 Data g_data;
 
 static GtkTreeModel *create_and_fill_model(void)
@@ -38,7 +38,7 @@ static GtkTreeModel *create_and_fill_model(void)
 
 	dir = g_dir_open(g_data.curr_dir, 0, &error);
 	if (!dir) {
-		g_error("Fail to find video folder");
+		g_error("Fail to find %s folder", dir);
 		return NULL;
 	}
 	while ((filename = g_dir_read_name(dir))) {
@@ -279,9 +279,21 @@ sb_selected (GtkPlacesSidebar  *sidebar,
 		g_print("file is NULL\n");
 }
 
+static void
+show_hidden (GtkMenuItem * item, gpointer user_data)
+{
+  		g_print("show_hidden\n");
+}
+
+static void
+show_panel (GtkMenuItem * item, gpointer user_data)
+{
+   		g_print("show_panel\n");
+}
+
 void files_init(GtkWidget * win)
 {
-	GtkWidget *mw, *sb, *tw, *sw, *pathbox, *prev;
+	GtkWidget *mw, *sb, *tw, *sw, *pathbox, *prev, *mb, *mb_img, *mb_menu;
 	GtkTreeViewColumn *col0, *col1, *col2, *col3;
 
 	/* Create sidebar */
@@ -329,9 +341,29 @@ void files_init(GtkWidget * win)
 	g_signal_connect(prev, "clicked", G_CALLBACK(previous_clicked),
 			 &g_data);
 
+
+	mb = gtk_menu_button_new ();
+    mb_img = gtk_image_new_from_icon_name("system-file-manager", GTK_ICON_SIZE_BUTTON);
+	gtk_button_set_image(GTK_BUTTON(mb), mb_img);
+
+    mb_menu = gtk_menu_new();
+    if (mb_menu) {
+        GtkWidget * item;
+        item = gtk_menu_item_new_with_label ("Show hidden files");
+        gtk_menu_attach(GTK_MENU(mb_menu), item, 0, 1, 0, 1);
+        gtk_widget_show(item);
+       	g_signal_connect(item, "activate", G_CALLBACK(show_hidden), &g_data);
+        item = gtk_menu_item_new_with_label ("Show side panel");
+        gtk_menu_attach(GTK_MENU(mb_menu), item, 0, 1, 1, 2);
+        gtk_widget_show(item);
+       	g_signal_connect(item, "activate", G_CALLBACK(show_panel), &g_data);
+    }
+    gtk_menu_button_set_popup(GTK_MENU_BUTTON(mb), mb_menu);
+
 	pathbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
 	gtk_box_pack_start(GTK_BOX(pathbox), prev, FALSE, TRUE, 2);
 	gtk_box_pack_start(GTK_BOX(pathbox), g_data.path, TRUE, TRUE, 2);
+	gtk_box_pack_start(GTK_BOX(pathbox), mb, FALSE, TRUE, 2);
 
 	/* create tree view container */
 	tw = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
